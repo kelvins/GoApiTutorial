@@ -5,11 +5,17 @@ go:
   - 1.8
   - tip
 
+services:
+  - mysql
+
+before_install:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS rest_api_example;'
+
 install:
- - go get golang.org/x/tools/cmd/cover
- - go get github.com/mattn/goveralls
- - go get github.com/gorilla/mux
- - go get github.com/go-sql-driver/mysql
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - go get github.com/gorilla/mux
+  - go get github.com/go-sql-driver/mysql
 
 script:
   - go test -covermode=count -coverprofile=coverage.out
