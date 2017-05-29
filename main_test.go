@@ -116,3 +116,23 @@ func TestCreateUser(t *testing.T) {
         t.Errorf("Expected product ID to be '1'. Got '%v'", m["id"])
     }
 }
+
+func addUsers(count int) {
+    if count < 1 {
+        count = 1
+    }
+
+    for i := 0; i < count; i++ {
+        a.DB.Exec("INSERT INTO users(name, age) VALUES($1, $2)", "User "+strconv.Itoa(i), (i*10))
+    }
+}
+
+func TestGetUser(t *testing.T) {
+    clearTable()
+    addUsers(1)
+
+    req, _ := http.NewRequest("GET", "/user/1", nil)
+    response := executeRequest(req)
+
+    checkResponseCode(t, http.StatusOK, response.Code)
+}
