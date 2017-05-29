@@ -6,6 +6,7 @@ import (
     "os"
     "log"
     "bytes"
+    "strconv"
     "net/http"
     "encoding/json"
     "net/http/httptest"
@@ -137,7 +138,7 @@ func TestGetUser(t *testing.T) {
     checkResponseCode(t, http.StatusOK, response.Code)
 }
 
-func TestUpdateProduct(t *testing.T) {
+func TestUpdateUser(t *testing.T) {
     clearTable()
     addUsers(1)
 
@@ -156,15 +157,33 @@ func TestUpdateProduct(t *testing.T) {
     var m map[string]interface{}
     json.Unmarshal(response.Body.Bytes(), &m)
 
-    if m["id"] != originalProduct["id"] {
+    if m["id"] != originalUser["id"] {
         t.Errorf("Expected the id to remain the same (%v). Got %v", originalUser["id"], m["id"])
     }
 
-    if m["name"] == originalProduct["name"] {
+    if m["name"] == originalUser["name"] {
         t.Errorf("Expected the name to change from '%v' to '%v'. Got '%v'", originalUser["name"], m["name"], m["name"])
     }
 
-    if m["age"] == originalProduct["age"] {
+    if m["age"] == originalUser["age"] {
         t.Errorf("Expected the age to change from '%v' to '%v'. Got '%v'", originalUser["age"], m["age"], m["age"])
     }
+}
+
+func TestDeleteUser(t *testing.T) {
+    clearTable()
+    addUsers(1)
+
+    req, _ := http.NewRequest("GET", "/user/1", nil)
+    response := executeRequest(req)
+    checkResponseCode(t, http.StatusOK, response.Code)
+
+    req, _ = http.NewRequest("DELETE", "/user/1", nil)
+    response = executeRequest(req)
+
+    checkResponseCode(t, http.StatusOK, response.Code)
+
+    req, _ = http.NewRequest("GET", "/user/1", nil)
+    response = executeRequest(req)
+    checkResponseCode(t, http.StatusNotFound, response.Code)
 }
