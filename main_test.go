@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/kelvins/goapi"
+	"."
 )
 
 var a main.App
