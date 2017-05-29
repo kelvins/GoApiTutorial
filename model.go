@@ -3,6 +3,7 @@
 package main
 
 import (
+  "fmt"
 	"database/sql"
 )
 
@@ -13,21 +14,31 @@ type user struct {
 }
 
 func (u *user) getUser(db *sql.DB) error {
-	return db.QueryRow("SELECT name, age FROM users WHERE id=$1", u.ID).Scan(&u.Name, &u.Age)
+	statement := fmt.Sprintf("SELECT name, age FROM users WHERE id=%d", u.ID)
+	return db.QueryRow(statement).Scan(&u.Name, &u.Age)
 }
 
 func (u *user) updateUser(db *sql.DB) error {
-	_, err := db.Exec("UPDATE users SET name=$1, age=$2 WHERE id=$3", u.Name, u.Age, u.ID)
+	statement := fmt.Sprintf("UPDATE users SET name='%s', age=%d WHERE id=%d", u.Name, u.Age, u.ID)
+	_, err := db.Exec(statement)
 	return err
 }
 
 func (u *user) deleteUser(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM users WHERE id=$1", u.ID)
+	statement := fmt.Sprintf("DELETE FROM users WHERE id=%d", u.ID)
+	_, err := db.Exec(statement)
 	return err
 }
 
 func (u *user) createUser(db *sql.DB) error {
-	err := db.QueryRow("INSERT INTO users(name, age) VALUES($1, $2) RETURNING id", u.Name, u.Age).Scan(&u.ID)
+	statement := fmt.Sprintf("INSERT INTO users(name, age) VALUES('%s', %d)", u.Name, u.Age)
+	_, err := db.Exec(statement)
+
+	if err != nil {
+		return err
+	}
+
+	err = db.QueryRow("SELECT LAST_INSERT_ID()").Scan(&u.ID)
 
 	if err != nil {
 		return err
@@ -37,7 +48,8 @@ func (u *user) createUser(db *sql.DB) error {
 }
 
 func getUsers(db *sql.DB, start, count int) ([]user, error) {
-	rows, err := db.Query("SELECT id, name, age FROM users LIMIT $1 OFFSET $2", count, start)
+	statement := fmt.Sprintf("SELECT id, name, age FROM users LIMIT %d OFFSET %d", count, start)
+	rows, err := db.Query(statement)
 
 	if err != nil {
 		return nil, err

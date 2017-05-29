@@ -3,6 +3,7 @@
 package main_test
 
 import (
+  "fmt"
 	"bytes"
 	"encoding/json"
 	"log"
@@ -93,7 +94,7 @@ func TestGetNonExistentUser(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	clearTable()
 
-	payload := []byte(`{"name":"test user","30`)
+	payload := []byte(`{"name":"test user","age":30}`)
 
 	req, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(payload))
 	response := executeRequest(req)
@@ -107,8 +108,8 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("Expected user name to be 'test user'. Got '%v'", m["name"])
 	}
 
-	if m["age"] != 30 {
-		t.Errorf("Expected user age to be '30'. Got '%v'", m["price"])
+	if m["age"] != 30.0 {
+		t.Errorf("Expected user age to be '30'. Got '%v'", m["age"])
 	}
 
 	// the id is compared to 1.0 because JSON unmarshaling converts numbers to
@@ -124,7 +125,8 @@ func addUsers(count int) {
 	}
 
 	for i := 0; i < count; i++ {
-		a.DB.Exec("INSERT INTO users(name, age) VALUES($1, $2)", "User "+strconv.Itoa(i), (i * 10))
+    statement := fmt.Sprintf("INSERT INTO users(name, age) VALUES('%s', %d)", ("User " + strconv.Itoa(i+1)), ((i+1) * 10))
+		a.DB.Exec(statement)
 	}
 }
 
