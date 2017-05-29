@@ -1,6 +1,6 @@
 // main_test.go
 
-package main_test
+package main
 
 import (
   "fmt"
@@ -12,14 +12,12 @@ import (
 	"os"
 	"strconv"
 	"testing"
-
-	"."
 )
 
-var a main.App
+var a App
 
 func TestMain(m *testing.M) {
-	a = main.App{}
+	a = App{}
 	a.Initialize("root", "", "rest_api_example")
 
 	ensureTableExists()
