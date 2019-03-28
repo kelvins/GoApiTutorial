@@ -53,6 +53,7 @@ As our application is simple, we will create only one table called users with th
 
 Let’s use the following statement to create the database and the table.
 
+```sql
     CREATE DATABASE rest_api_example;
     USE rest_api_example;
     CREATE TABLE users (
@@ -60,6 +61,7 @@ Let’s use the following statement to create the database and the table.
         name VARCHAR(50) NOT NULL,
         age INT NOT NULL
     );
+```
 
 It is a very simple table but it’s ok for this example.
 
@@ -80,6 +82,7 @@ You can easily use go get to get it:
 
 First of all, let’s create a file called app.go and add an App structure to hold our application. This structure provides references to the router and the database that we will use on our application. To make it testable let’s also create two methods to initialize and run the application:
 
+```go
     // app.go
     
     package main
@@ -99,6 +102,7 @@ First of all, let’s create a file called app.go and add an App structure to ho
     func (a *App) Initialize(user, password, dbname string) { }
     
     func (a *App) Run(addr string) { }
+```
 
 The Initialize method is responsible for create a database connection and wire up the routes, and the Run method will simply start the application.
 
@@ -106,6 +110,7 @@ Note that we have to import both mux and mysql packages here.
 
 Now, let’s create the main.go file which will contain the entry point for the application:
 
+```go
     // main.go
     
     package main
@@ -117,11 +122,13 @@ Now, let’s create the main.go file which will contain the entry point for the 
     
         a.Run(":8080")
     }
+```
 
 Note that on this step you need to set the username and password.
 
 Now, let’s create a file called model.go which is used to define our user structure and provide some useful functions to deal with database operations.
 
+```go
     // model.go
 
     package main
@@ -156,6 +163,7 @@ Now, let’s create a file called model.go which is used to define our user stru
     func getUsers(db *sql.DB, start, count int) ([]user, error) {
         return nil, errors.New("Not implemented")
     }
+```
 
 At this point we should have a file structure like that:
 
@@ -171,6 +179,7 @@ As we are following the test-driven development (TDD) methodology, we need to wr
 
 As we will run the tests using a database, we need to make sure the database is set up before running the tests and cleaned up after the tests. So let’s create the main_test.go file. In the main_test.go file let’s create the TestMain function which is executed before all tests and will do these stuff for us.
 
+```go
     // main_test.go
 
     package main
@@ -214,6 +223,7 @@ As we will run the tests using a database, we need to make sure the database is 
         name VARCHAR(50) NOT NULL,
         age INT NOT NULL
     )`
+```
 
 Note that the global variable a represents the application that we want to test.
 
@@ -223,6 +233,7 @@ After run the tests we need to call the clearTable function to clean the databas
 
 In order to run the tests we need to implement the Initialize function in the app.go file, to create a database connection and initialize the router. Now the Initialize function should look like this:
 
+```go
     // app.go
     
     func (a *App) Initialize(user, password, dbname string) {
@@ -236,6 +247,7 @@ In order to run the tests we need to implement the Initialize function in the ap
 
         a.Router = mux.NewRouter()
     }
+```
 
 At this point even if we don’t have any tests we should be able to run go test without finding any runtime errors. Let’s try it out:
 
@@ -251,6 +263,7 @@ Executing this command should result something like this:
 
 Let’s start testing the response of the /users endpoint with an empty table.
 
+```go
     // main_test.go
 
     func TestEmptyTable(t *testing.T) {
@@ -265,6 +278,7 @@ Let’s start testing the response of the /users endpoint with an empty table.
             t.Errorf("Expected an empty array. Got %s", body)
         }
     }
+```
 
 This test will delete all records in the users table and send a GET request to the /users endpoint.
 
@@ -272,6 +286,7 @@ We use the executeRequest function to execute the request, and checkResponseCode
 
 So, let’s implement the executeRequest and checkResponseCode functions.
 
+```go
     // main_test.go
     
     func executeRequest(req *http.Request) *httptest.ResponseRecorder {
@@ -286,6 +301,7 @@ So, let’s implement the executeRequest and checkResponseCode functions.
             t.Errorf("Expected response code %d. Got %d\n", expected, actual)
         }
     }
+```
 
 Make sure you have imported the "net/http" and "net/http/httptest" packages and run the tests again. If everything goes well you should get something like this:
 
@@ -301,6 +317,7 @@ As expected, the tests will fail because we don’t have implemented anything ye
 
 Let’s implement a test that tries to fetch a nonexistent user.
 
+```go
     // main_test.go
     
     func TestGetNonExistentUser(t *testing.T) {
@@ -317,6 +334,7 @@ Let’s implement a test that tries to fetch a nonexistent user.
             t.Errorf("Expected the 'error' key of the response to be set to 'User not found'. Got '%s'", m["error"])
         }
     }
+```
 
 This test basically tests two things: the status code which should be 404 and if the response contains the expected error message.
 
@@ -324,6 +342,7 @@ Note that in this step we need to import the "encoding/json" package to use the 
 
 Now, let’s implement a test to create a user.
 
+```go
     // main_test.go
 
     func TestCreateUser(t *testing.T) {
@@ -353,6 +372,7 @@ Now, let’s implement a test to create a user.
             t.Errorf("Expected user ID to be '1'. Got '%v'", m["id"])
         }
     }
+```
 
 In this test, we manually add a new user to the database and, by accessing the correspondent endpoint, we check if the status code is 201 (the resource was created) and if the JSON response contains the correct information that was added.
 
@@ -360,6 +380,7 @@ Note that in this step we need to import the "bytes" package to use the bytes.Ne
 
 Now, let’s implement a test to fetch an existing user.
 
+```go
     // main_test.go
     
     func TestGetUser(t *testing.T) {
@@ -371,11 +392,13 @@ Now, let’s implement a test to fetch an existing user.
 
         checkResponseCode(t, http.StatusOK, response.Code)
     }
+```
 
 This test basically add a new user to the database and check if the correct endpoint results in an HTTP response with status code 200 (success).
 
 In this test above we use the addUsers function which is used to add a new user to the database for the tests. So, let’s implement this function:
 
+```go
     // main_test.go
     
     func addUsers(count int) {
@@ -388,11 +411,13 @@ In this test above we use the addUsers function which is used to add a new user 
             a.DB.Exec(statement)
         }
     }
+```
 
 Note that in this step we need to import the "strconv" package to use the strconv.Itoa function to convert an integer to a string.
 
 Now, let’s test the update option:
 
+```go
     // main_test.go
 
     func TestUpdateUser(t *testing.T) {
@@ -426,6 +451,7 @@ Now, let’s test the update option:
             t.Errorf("Expected the age to change from '%v' to '%v'. Got '%v'", originalUser["age"], m["age"], m["age"])
         }
     }
+```
 
 In the above test, we basically add a new user to the database and then we use the correct endpoint to update it.
 
@@ -433,6 +459,7 @@ It tests if the status code is 200 indicating success and if the JSON response c
 
 And the last test, for now, will try to delete a user.
 
+```go
     // main_test.go
     
     func TestDeleteUser(t *testing.T) {
@@ -452,6 +479,7 @@ And the last test, for now, will try to delete a user.
         response = executeRequest(req)
         checkResponseCode(t, http.StatusNotFound, response.Code)
     }
+```
 
 In this test we basically create a new user and test if it exists in the database, then we user the correct endpoint to delete the user and checks if it was properly deleted.
 
@@ -463,6 +491,7 @@ All tests should fail but it’s ok because we did not implement the application
 
 Let’s begin implementing the methods in the model.go file. These methods are responsible for executing the database statements and it can be implemented as follows:
 
+```go
     // model.go
     
     func (u *user) getUser(db *sql.DB) error {
@@ -521,6 +550,7 @@ Let’s begin implementing the methods in the model.go file. These methods are r
 
         return users, nil
     }
+```
 
 The getUsers function fetches records from the users table and limits the number of records based on the count value passed by parameter. The start parameter determines how many records are skipped at the beginning.
 
@@ -530,6 +560,7 @@ The model is done, now we need to implement the App functions, including the **r
 
 Let’s start creating the getUser function to fetch a single user.
 
+```go
     // app.go
     
     func (a *App) getUser(w http.ResponseWriter, r *http.Request) {
@@ -553,11 +584,13 @@ Let’s start creating the getUser function to fetch a single user.
 
         respondWithJSON(w, http.StatusOK, u)
     }
+```
 
 This handler basically retrieves the id of the user from the requested URL and uses the getUser function, from the model, to fetch the user details.
 
 If the user is not found it will respond with the status code 404. This function uses the respondWithError and respondWithJSON functions to process errors and normal responses. These functions are implemented as follows:
 
+```go
     // app.go
     
     func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -571,9 +604,11 @@ If the user is not found it will respond with the status code 404. This function
         w.WriteHeader(code)
         w.Write(response)
     }
+```
 
 The rest of the handlers can be implemented in a similar manner:
 
+```go
     // app.go
     
     func (a *App) getUsers(w http.ResponseWriter, r *http.Request) {
@@ -595,11 +630,13 @@ The rest of the handlers can be implemented in a similar manner:
 
         respondWithJSON(w, http.StatusOK, users)
     }
+```
 
 This handler uses the count and start parameters from the querystring to fetch count number of users, starting at position start in the database. By default, start is set to 0 and count is set to 10. If these parameters aren’t provided, this handler will respond with the first 10 users.
 
 Let’s implement the handler to create a user.
 
+```go
     // app.go
     
     func (a *App) createUser(w http.ResponseWriter, r *http.Request) {
@@ -618,11 +655,13 @@ Let’s implement the handler to create a user.
 
         respondWithJSON(w, http.StatusCreated, u)
     }
+```
 
 This handler assumes that the request body is a JSON object containing the details of the user to be created. It extracts that object into a user and then uses the createUser function.
 
 The handler to update a user:
 
+```go
     // app.go
     
     func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
@@ -649,11 +688,13 @@ The handler to update a user:
 
         respondWithJSON(w, http.StatusOK, u)
     }
+```
 
 This handler extracts the user details from the request body and the id from the URL, and uses the id and the body to update the user.
 
 And the last handler that we will implement is used to delete a user.
 
+```go
     // app.go
     
     func (a *App) deleteUser(w http.ResponseWriter, r *http.Request) {
@@ -672,11 +713,13 @@ And the last handler that we will implement is used to delete a user.
 
         respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
     }
+```
 
 This handler extracts the id from the URL and uses it to delete the corresponding user.
 
 Now that we have all handlers implemented we must define the routes which will use them.
 
+```go
     // app.go
     
     func (a *App) initializeRoutes() {
@@ -686,11 +729,13 @@ Now that we have all handlers implemented we must define the routes which will u
         a.Router.HandleFunc("/user/{id:[0-9]+}", a.updateUser).Methods("PUT")
         a.Router.HandleFunc("/user/{id:[0-9]+}", a.deleteUser).Methods("DELETE")
     }
+```
 
 The routes are defined based on the API specification defined earlier. The {id:[0-9]+} part of the path indicates that Gorilla Mux should treat process a URL only if the id is a number. For all matching requests, Gorilla Mux then stores the the actual numeric value in the id variable.
 
 Now we just need to implement the Run function and call initializeRoutes from the Initialize method.
 
+```go
     // app.go
     
     func (a *App) Initialize(user, password, dbname string) {
@@ -709,9 +754,11 @@ Now we just need to implement the Run function and call initializeRoutes from th
     func (a *App) Run(addr string) {
         log.Fatal(http.ListenAndServe(addr, a.Router))
     }
+```
 
 Remember to import all packages needed.
 
+```go
     // app.go
     
     import (
@@ -725,6 +772,7 @@ Remember to import all packages needed.
         _ "github.com/go-sql-driver/mysql"
         "github.com/gorilla/mux"
     )
+```
 
 The final version of the app.go file should look like this: [https://github.com/kelvins/GoApiTutorial/blob/master/app.go](https://github.com/kelvins/GoApiTutorial/blob/master/app.go)
 
